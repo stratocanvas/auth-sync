@@ -27,7 +27,7 @@ async function connectToDatabase() {
 	return client;
 }
 
-// Encryption
+// Decryption
 function decryptMessage(encryptedMessage) {
 	const { encryptedData, iv } = encryptedMessage;
 	const ivBuffer = Buffer.from(iv, "base64");
