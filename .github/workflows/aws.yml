@@ -7,7 +7,7 @@ on:
 jobs:
   deployment:
     runs-on: ubuntu-latest
-    environment: production
+    environment: Production
     if: github.actor == ${{ vars.ALLOWED_USER }}
     
     steps:
