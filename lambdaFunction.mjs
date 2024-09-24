@@ -1,31 +1,17 @@
-import { MongoClient } from "mongodb";
 import { createDecipheriv } from "node:crypto";
 
 // Environment variables
-const MONGODB_URI = process.env.MONGODB_URI;
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
-const DB_NAME = process.env.DB_NAME;
-const COLLECTION_NAME = process.env.COLLECTION_NAME;
-
-if (!MONGODB_URI || !ENCRYPTION_KEY) {
-	throw new Error("Missing required environment variables");
-}
-
 const ENCRYPTION_KEY_BUFFER = Buffer.from(ENCRYPTION_KEY, "hex");
 
-// Database connection
-let cachedClient = null;
-
-async function connectToDatabase() {
-	if (cachedClient) {
-		return cachedClient;
-	}
-
-	const client = new MongoClient(MONGODB_URI);
-	await client.connect();
-	cachedClient = client;
-	return client;
-}
+// Logging
+const logger = {
+	info: (message) => console.log(`ℹ️ ${message}`),
+	success: (message) => console.log(`✅ ${message}`),
+	warning: (message) => console.log(`⚠️ ${message}`),
+	error: (message, error) =>
+		console.error(`❌ ${message}\n${error.stack || error}`),
+};
 
 // Decryption
 function decryptMessage(encryptedMessage) {
@@ -51,37 +37,18 @@ function decryptMessage(encryptedMessage) {
 	return JSON.parse(decrypted.toString("utf8"));
 }
 
-// Logging
-const logger = {
-	info: (message) => console.log(`ℹ️ ${message}`),
-	success: (message) => console.log(`✅ ${message}`),
-	warning: (message) => console.log(`⚠️ ${message}`),
-	error: (message, error) =>
-		console.error(`❌ ${message}\n${error.stack || error}`),
-};
-
 // Database operations
-async function performMongoOperation(collection, action, userId) {
-	switch (action) {
-		case "create": {
-			const createResult = await collection.insertOne({ uid: userId });
-			logger.success(`Created user ${userId}`);
-			return {
-				acknowledged: createResult.acknowledged,
-				insertedId: createResult.insertedId.toString(),
-			};
-		}
-		case "delete": {
-			const deleteResult = await collection.deleteOne({ uid: userId });
-			logger.success(`Deleted user ${userId}`);
-			return {
-				acknowledged: deleteResult.acknowledged,
-				deletedCount: deleteResult.deletedCount,
-			};
-		}
-		default:
-			throw new Error(`Unsupported action: ${action}`);
-	}
+async function sendToDB(query) {
+	const response = await fetch(process.env.SUPABASE_URL, {
+		method: "POST",
+		headers: {
+			"Content-type": "applicaton/json",
+			"apikey": process.env.SUPABASE_KEY,
+			"Authorization": `Bearer ${process.env.SUPABASE_KEY}`
+		},
+		body:JSON.stringify(query)
+	})
+	return response.json()
 }
 
 // Main processing function
@@ -90,14 +57,7 @@ async function processRecord(record) {
 		const message = JSON.parse(record.body);
 		const decryptedMessage = decryptMessage(message);
 		logger.success("Decryption complete");
-
-		const client = await connectToDatabase();
-		const collection = client.db(DB_NAME).collection(COLLECTION_NAME);
-		const result = await performMongoOperation(
-			collection,
-			decryptedMessage.action,
-			decryptedMessage.userId,
-		);
+		const result = await sendToDB(decryptedMessage);
 
 		return {
 			statusCode: 200,
