@@ -60,7 +60,7 @@ async function processRecord(record) {
 		const decryptedMessage = decryptMessage(message);
 		logger.success("Decryption complete");
 		const result = await sendToDB(decryptedMessage);
-
+		logger.info("Result: ", JSON.stringify(result));
 		return {
 			statusCode: 200,
 			body: JSON.stringify({
