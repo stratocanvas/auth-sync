@@ -42,13 +42,13 @@ async function sendToDB(query) {
 	const response = await fetch(process.env.SUPABASE_URL, {
 		method: "POST",
 		headers: {
-			"Content-type": "applicaton/json",
+			"Content-Type": "application/json",
 			"apikey": process.env.SUPABASE_KEY,
 			"Authorization": `Bearer ${process.env.SUPABASE_KEY}`
 		},
 		body:JSON.stringify(query)
-	})
-	return response.json()
+	});
+	return response.json();
 }
 
 // Main processing function
