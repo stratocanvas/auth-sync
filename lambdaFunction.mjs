@@ -1,3 +1,4 @@
+/* global fetch */
 import { createDecipheriv } from "node:crypto";
 
 // Environment variables
@@ -39,7 +40,7 @@ function decryptMessage(encryptedMessage) {
 
 // Database operations
 async function sendToDB(query) {
-	const response = await fetch(process.env.SUPABASE_URL, {
+	const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/${process.env.API_NAME_USRC}`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
