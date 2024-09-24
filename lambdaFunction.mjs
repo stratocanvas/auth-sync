@@ -1,3 +1,4 @@
+/* global fetch */
 import { createDecipheriv } from "node:crypto";
 
 // Environment variables
@@ -15,7 +16,8 @@ const logger = {
 
 // Decryption
 function decryptMessage(encryptedMessage) {
-	const { encryptedData, iv } = encryptedMessage;
+	const parsedMessage = JSON.parse(encryptedMessage);
+  const { encryptedData, iv } = parsedMessage;
 	const ivBuffer = Buffer.from(iv, "base64");
 	const encryptedBuffer = Buffer.from(encryptedData, "base64");
 	const authTagLength = 16;
@@ -39,16 +41,16 @@ function decryptMessage(encryptedMessage) {
 
 // Database operations
 async function sendToDB(query) {
-	const response = await fetch(process.env.SUPABASE_URL, {
+	const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/${process.env.API_NAME_USRC}`, {
 		method: "POST",
 		headers: {
-			"Content-type": "applicaton/json",
+			"Content-Type": "application/json",
 			"apikey": process.env.SUPABASE_KEY,
 			"Authorization": `Bearer ${process.env.SUPABASE_KEY}`
 		},
 		body:JSON.stringify(query)
-	})
-	return response.json()
+	});
+	return response.json();
 }
 
 // Main processing function
@@ -58,7 +60,7 @@ async function processRecord(record) {
 		const decryptedMessage = decryptMessage(message);
 		logger.success("Decryption complete");
 		const result = await sendToDB(decryptedMessage);
-
+		logger.info("Result: ", JSON.stringify(result));
 		return {
 			statusCode: 200,
 			body: JSON.stringify({
