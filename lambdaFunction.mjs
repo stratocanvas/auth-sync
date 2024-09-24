@@ -16,7 +16,8 @@ const logger = {
 
 // Decryption
 function decryptMessage(encryptedMessage) {
-	const { encryptedData, iv } = encryptedMessage;
+	const parsedMessage = JSON.parse(encryptedMessage);
+  const { encryptedData, iv } = parsedMessage;
 	const ivBuffer = Buffer.from(iv, "base64");
 	const encryptedBuffer = Buffer.from(encryptedData, "base64");
 	const authTagLength = 16;
